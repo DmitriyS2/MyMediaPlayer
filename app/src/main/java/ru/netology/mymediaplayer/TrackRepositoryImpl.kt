@@ -1,0 +1,32 @@
+package ru.netology.mymediaplayer
+
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.lang.reflect.Type
+import java.util.concurrent.TimeUnit
+
+class TrackRepositoryImpl:TrackRepository {
+
+    val gson = Gson()
+    val trackType: Type = object : TypeToken <DataMedia>(){}.type
+    val client:OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    override fun getAlbum():DataMedia {
+        val request = Request.Builder()
+            .url(BASE_URL)
+            .build()
+        val call = client.newCall(request)
+        val response = call.execute()
+        val responseString = response.body?.string() ?: error("no body")
+        return gson.fromJson(responseString, trackType)
+    }
+
+    companion object {
+        val BASE_URL = "https://github.com/netology-code/andad-homeworks/raw/master/09_multimedia/data/album.json"
+    }
+
+}
