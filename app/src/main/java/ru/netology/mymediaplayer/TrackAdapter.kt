@@ -9,8 +9,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import ru.netology.mymediaplayer.databinding.ItemTrackBinding
 
-interface Listener{
-    fun highlite(dataItemTrack: DataItemTrack)
+interface Listener {
+    fun highlight(dataItemTrack: DataItemTrack)
 }
 
 class TrackAdapter(private val listener: Listener) :
@@ -29,20 +29,19 @@ class TrackAdapter(private val listener: Listener) :
         }
 
         fun bind(dataItemTrack: DataItemTrack) {
-        binding.apply {
-            imagePlayOrPause.setImageResource(if(dataItemTrack.isPlaying) R.drawable.baseline_pause_48 else R.drawable.baseline_play_48)
+            binding.apply {
+                imagePlayOrPause.setImageResource(if (dataItemTrack.isPlaying) R.drawable.baseline_pause_48 else R.drawable.baseline_play_48)
 
-            textNameTrack.text = dataItemTrack.name
-            textNameAlbum.text = dataItemTrack.album
+                textNameTrack.text = dataItemTrack.name
+                textNameAlbum.text = dataItemTrack.album
 
-            cardView1.getBackground().setTint(if(dataItemTrack.isChecked) Color.YELLOW else Color.WHITE)
+                cardView1.getBackground()
+                    .setTint(if (dataItemTrack.isChecked) Color.YELLOW else Color.WHITE)
 
-            cardView2.setOnClickListener{
-//                dataItemTrack.isChecked = !dataItemTrack.isChecked
-//                cardView1.getBackground().setTint(if(dataItemTrack.isChecked) Color.YELLOW else Color.WHITE)
-                listener.highlite(dataItemTrack)
+                cardView2.setOnClickListener {
+                    listener.highlight(dataItemTrack)
+                }
             }
-        }
         }
     }
 
@@ -57,7 +56,7 @@ class TrackAdapter(private val listener: Listener) :
         position: Int,
         payloads: List<Any>
     ) {
- //          if (payloads.isEmpty()) {
+        //          if (payloads.isEmpty()) {
         onBindViewHolder(holder, position)
 //        } else {
 //            payloads.forEach {
@@ -91,6 +90,6 @@ class TrackDiffCallback : DiffUtil.ItemCallback<DataItemTrack>() {
 }
 
 data class Payload(
-    val id:Int?=null,
-    val isChecked:Boolean? = null
+    val id: Int? = null,
+    val isChecked: Boolean? = null
 )

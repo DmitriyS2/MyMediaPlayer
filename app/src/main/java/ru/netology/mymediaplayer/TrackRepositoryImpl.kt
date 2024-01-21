@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit
 
 class TrackRepositoryImpl:TrackRepository {
 
-    val gson = Gson()
-    val trackType: Type = object : TypeToken <DataMedia>(){}.type
-    val client:OkHttpClient = OkHttpClient.Builder()
+    private val gson = Gson()
+    private val trackType: Type = object : TypeToken <DataMedia>(){}.type
+    private val client:OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .build()
 
@@ -26,7 +26,7 @@ class TrackRepositoryImpl:TrackRepository {
     }
 
     companion object {
-        val BASE_URL = "https://github.com/netology-code/andad-homeworks/raw/master/09_multimedia/data/album.json"
+        const val BASE_URL = "https://github.com/netology-code/andad-homeworks/raw/master/09_multimedia/data/album.json"
     }
 
 }

@@ -3,30 +3,37 @@ package ru.netology.mymediaplayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.VideoView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import ru.netology.mymediaplayer.databinding.ActivityMainBinding
-
 
 class MainActivity : AppCompatActivity() {
 
     private val mediaObserver = MediaLifecycleObserver()
 
-    private val viewModel:MainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels()
 
     lateinit var binding: ActivityMainBinding
+
+    var flagPause: Boolean = false
+    var firstStart: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val adapter = TrackAdapter(object : Listener {
-            override fun highlite(dataItemTrack: DataItemTrack) {
-                viewModel.highlite(dataItemTrack)
-            }
+        this.window.statusBarColor = this.getColor(R.color.grey)
 
+        val adapter = TrackAdapter(object : Listener {
+            override fun highlight(dataItemTrack: DataItemTrack) {
+                flagPause = false
+                firstStart = true
+                binding.buttonPlay.setImageResource(if (flagPause) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
+                stopTrack()
+                viewModel.highlight(dataItemTrack)
+            }
         })
 
         binding.rwTracks.layoutManager = LinearLayoutManager(this)
@@ -34,50 +41,76 @@ class MainActivity : AppCompatActivity() {
 
         lifecycle.addObserver(mediaObserver)
 
-        binding.buttonPlay.setOnClickListener {
-            viewModel.getAlbum()
+        binding.buttonPlay.setImageResource(if (flagPause) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
 
-//            mediaObserver.apply {
-//                player?.setDataSource(
-//                    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-//                )
-//            }.play()
+        binding.buttonPlay.setOnClickListener {
+            if (!flagPause) {
+                //первый старт
+                if (firstStart) {
+                   firstStartPlay()
+                    //продолжение после паузы
+                } else {
+                    notFirstStartPlay()
+                }
+                flagPause = true
+                //пауза
+            } else {
+                pauseTrack()
+            }
+
+            mediaObserver.player?.setOnCompletionListener {
+                stopTrack()
+                viewModel.goToNextTrack()
+                firstStartPlay()
+            }
+
+            viewModel.changeImageTrack(viewModel.selectedTrack?.value, flagPause)
+            binding.buttonPlay.setImageResource(if (flagPause) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
+
         }
 
         viewModel.dataMedia.observe(this) {
             it?.let {
-                Log.d("MyLog", "3.dataMedia=$it, tracks=${it.tracks}")
-                val listDataItemTrack= mutableListOf<DataItemTrack>()
-                viewModel.dataMedia.value?.tracks?.forEach {track ->
-                    listDataItemTrack.add(DataItemTrack(id=track.id, name = track.file, album = it.title))
+                Log.d("MyLog", "MainActivity dataMedia from observe=$it, tracks=${it.tracks}")
+                val listDataItemTrack = mutableListOf<DataItemTrack>()
+                viewModel.dataMedia.value?.tracks?.forEach { track ->
+                    listDataItemTrack.add(
+                        DataItemTrack(
+                            id = track.id,
+                            name = track.file,
+                            album = it.title
+                        )
+                    )
                 }
                 viewModel.listDataItemTrack.value = listDataItemTrack
                 binding.nameAlbum.text = it.title
                 binding.nameArtist.text = it.artist
                 binding.published.text = it.published
                 binding.genre.text = it.genre
-                Log.d("MyLog", "t=$listDataItemTrack")
             }
-
-
-
-//            adapter.trackList = listDataItemTrack
-//            adapter.submitList(listDataItemTrack)
         }
 
         viewModel.listDataItemTrack.observe(this) {
             val list = it ?: emptyList()
-                adapter.trackList = list
-                adapter.submitList(list)
+            adapter.trackList = list
+            adapter.submitList(list)
 
-            Log.d("MyLog", "5.listDataItemTrack=$it")
+            Log.d("MyLog", "MAinActivity listDataItemTrack from observe=$it")
         }
 
         viewModel.selectedTrack?.observe(this) {
-        val text = it ?: "Выберите\nкомпозицию"
+            val text = it ?: "Выберите\nкомпозицию"
             binding.chooseTrack.text = text
+            binding.buttonPlay.isEnabled = it != null
+
+            Log.d("MyLog", "MainActivity selectedTrack from observe=$it")
         }
 
+//            mediaObserver.apply {
+//                player?.setDataSource(
+//                    "https://raw.githubusercontent.com/netology-code/andad-homeworks/master/09_multimedia/data/+${viewModel.selectedTrack?.value.toString()}"
+//                )
+//            }.play()
         /*
         findViewById<Button>(R.id.play).setOnClickListener {
             MediaPlayer.create(this, R.raw.ring).apply {
@@ -108,5 +141,51 @@ class MainActivity : AppCompatActivity() {
 //                stopPlayback()
 //            }
 //        }
+    }
+
+    private fun firstStartPlay() {
+        firstStart = false
+        mediaObserver.apply {
+            player?.setDataSource("https://raw.githubusercontent.com/netology-code/andad-homeworks/master/09_multimedia/data/${viewModel.selectedTrack?.value.toString()}")
+            Log.d(
+                "MyLog",
+                "URL=https://raw.githubusercontent.com/netology-code/andad-homeworks/master/09_multimedia/data/${viewModel.selectedTrack?.value.toString()}"
+            )
+        }.play()
+        showText("playing")
+    }
+
+    private fun notFirstStartPlay() {
+        mediaObserver.apply {
+            player?.currentPosition?.let {
+                    it1 -> player?.seekTo(it1) }
+            player?.start()
+
+        }
+        showText("playing")
+    }
+
+    private fun pauseTrack() {
+        mediaObserver.apply {
+            player?.pause()
+        }
+        flagPause = false
+        showText("pause")
+    }
+    private fun stopTrack() {
+        mediaObserver.apply {
+            player?.stop()
+            player?.reset()
+      //      player?.release()
+     //       player = null
+        }
+    }
+
+    private fun showText(text:String) {
+        Toast.makeText(
+            this,
+            "${viewModel.selectedTrack?.value.toString()} $text",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
