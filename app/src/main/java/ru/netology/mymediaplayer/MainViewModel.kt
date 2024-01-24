@@ -60,13 +60,13 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun changeImageTrack(name:String?, flag:Boolean) {
+    fun changeImageTrack(name: String?, flag: Boolean) {
         name?.let {
             //играется
-            if(flag) {
+            if (flag) {
                 listDataItemTrack.value = listDataItemTrack.value?.let {
                     it.map { data ->
-                        if(data.name==name) {
+                        if (data.name == name) {
                             data.copy(isPlaying = true)
                         } else {
                             data.copy(isPlaying = false)
@@ -77,7 +77,7 @@ class MainViewModel : ViewModel() {
             } else {
                 listDataItemTrack.value = listDataItemTrack.value?.let {
                     it.map { data ->
-                        if(data.name==name) {
+                        if (data.name == name) {
                             data.copy(isPlaying = false)
                         } else {
                             data
@@ -87,18 +87,19 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
     fun goToNextTrack() {
         val maxId = listDataItemTrack.value?.maxByOrNull {
             it.id
         }?.id ?: 0
 
         val currentId = listDataItemTrack.value?.filter {
-            it.name==selectedTrack?.value
-        }?.map {data->
+            it.name == selectedTrack?.value
+        }?.map { data ->
             data.id
         }?.firstOrNull() ?: 0
 
-        val newId = if(currentId==maxId) 1 else currentId+1
+        val newId = if (currentId == maxId) 1 else currentId + 1
 
         val newTrack = listDataItemTrack.value?.firstOrNull {
             it.id == newId
@@ -109,8 +110,11 @@ class MainViewModel : ViewModel() {
         changeImageTrack(newName, true)
 
         newTrack?.let {
-           highlight(it)
+            highlight(it)
         }
-        Log.d("MyLog", "goToNextTrack. maxId=$maxId, currentId=$currentId, newId=$newId, newTrack=${newTrack.toString()}, newName=$newName")
+        Log.d(
+            "MyLog",
+            "goToNextTrack. maxId=$maxId, currentId=$currentId, newId=$newId, newTrack=${newTrack.toString()}, newName=$newName"
+        )
     }
 }

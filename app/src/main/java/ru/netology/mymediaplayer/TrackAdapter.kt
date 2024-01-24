@@ -56,8 +56,8 @@ class TrackAdapter(private val listener: Listener) :
         position: Int,
         payloads: List<Any>
     ) {
-        //          if (payloads.isEmpty()) {
-        onBindViewHolder(holder, position)
+    //   if (payloads.isEmpty()) {
+            onBindViewHolder(holder, position)
 //        } else {
 //            payloads.forEach {
 //                if (it is Payload) {

@@ -8,6 +8,9 @@ import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import ru.netology.mymediaplayer.databinding.ActivityMainBinding
 
+var flagPlay: Boolean = false
+var firstStart: Boolean = true
+
 class MainActivity : AppCompatActivity() {
 
     private val mediaObserver = MediaLifecycleObserver()
@@ -15,9 +18,6 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     lateinit var binding: ActivityMainBinding
-
-    var flagPause: Boolean = false
-    var firstStart: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,10 +28,10 @@ class MainActivity : AppCompatActivity() {
 
         val adapter = TrackAdapter(object : Listener {
             override fun highlight(dataItemTrack: DataItemTrack) {
-                flagPause = false
+                flagPlay = false
                 firstStart = true
-                binding.buttonPlay.setImageResource(if (flagPause) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
-                stopTrack()
+                binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
+                mediaObserver.stopTrack()
                 viewModel.highlight(dataItemTrack)
             }
         })
@@ -41,32 +41,35 @@ class MainActivity : AppCompatActivity() {
 
         lifecycle.addObserver(mediaObserver)
 
-        binding.buttonPlay.setImageResource(if (flagPause) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
+        binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
 
         binding.buttonPlay.setOnClickListener {
-            if (!flagPause) {
+            if (!flagPlay) {
                 //первый старт
                 if (firstStart) {
-                   firstStartPlay()
+                    mediaObserver.firstStartPlay(viewModel.selectedTrack?.value.toString())
+                    showText("playing")
                     //продолжение после паузы
                 } else {
-                    notFirstStartPlay()
+                    mediaObserver.notFirstStartPlay()
+                    showText("playing again")
                 }
-                flagPause = true
+                flagPlay = true
                 //пауза
             } else {
-                pauseTrack()
+                mediaObserver.pauseTrack()
+                showText("pause")
             }
 
             mediaObserver.player?.setOnCompletionListener {
-                stopTrack()
+                mediaObserver.stopTrack()
                 viewModel.goToNextTrack()
-                firstStartPlay()
+                mediaObserver.firstStartPlay(viewModel.selectedTrack?.value.toString())
+                showText("playing")
             }
 
-            viewModel.changeImageTrack(viewModel.selectedTrack?.value, flagPause)
-            binding.buttonPlay.setImageResource(if (flagPause) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
-
+            viewModel.changeImageTrack(viewModel.selectedTrack?.value, flagPlay)
+            binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
         }
 
         viewModel.dataMedia.observe(this) {
@@ -95,7 +98,7 @@ class MainActivity : AppCompatActivity() {
             adapter.trackList = list
             adapter.submitList(list)
 
-            Log.d("MyLog", "MAinActivity listDataItemTrack from observe=$it")
+            Log.d("MyLog", "MainActivity listDataItemTrack from observe=$it")
         }
 
         viewModel.selectedTrack?.observe(this) {
@@ -143,45 +146,13 @@ class MainActivity : AppCompatActivity() {
 //        }
     }
 
-    private fun firstStartPlay() {
-        firstStart = false
-        mediaObserver.apply {
-            player?.setDataSource("https://raw.githubusercontent.com/netology-code/andad-homeworks/master/09_multimedia/data/${viewModel.selectedTrack?.value.toString()}")
-            Log.d(
-                "MyLog",
-                "URL=https://raw.githubusercontent.com/netology-code/andad-homeworks/master/09_multimedia/data/${viewModel.selectedTrack?.value.toString()}"
-            )
-        }.play()
-        showText("playing")
+    override fun onResume() {
+        super.onResume()
+        binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
+        viewModel.changeImageTrack(viewModel.selectedTrack?.value, flagPlay)
     }
 
-    private fun notFirstStartPlay() {
-        mediaObserver.apply {
-            player?.currentPosition?.let {
-                    it1 -> player?.seekTo(it1) }
-            player?.start()
-
-        }
-        showText("playing")
-    }
-
-    private fun pauseTrack() {
-        mediaObserver.apply {
-            player?.pause()
-        }
-        flagPause = false
-        showText("pause")
-    }
-    private fun stopTrack() {
-        mediaObserver.apply {
-            player?.stop()
-            player?.reset()
-      //      player?.release()
-     //       player = null
-        }
-    }
-
-    private fun showText(text:String) {
+    private fun showText(text: String) {
         Toast.makeText(
             this,
             "${viewModel.selectedTrack?.value.toString()} $text",
