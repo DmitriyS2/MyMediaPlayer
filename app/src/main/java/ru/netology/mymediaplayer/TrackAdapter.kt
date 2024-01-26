@@ -21,14 +21,21 @@ class TrackAdapter(private val listener: Listener) :
     class TrackHolder(item: View, private val listener: Listener) : RecyclerView.ViewHolder(item) {
         val binding = ItemTrackBinding.bind(item)
 
+        private lateinit var dataItem: DataItemTrack
         fun bind(payload: Payload) {
             payload.isChecked?.also { isChecked ->
                 binding.cardView1.getBackground()
                     .setTint(if (isChecked) Color.YELLOW else Color.WHITE)
+                dataItem = dataItem.copy(isChecked = isChecked)
+            }
+            payload.isPlaying?.also {isPlaying ->
+                dataItem = dataItem.copy(isPlaying = isPlaying)
+                binding.imagePlayOrPause.setImageResource(if (isPlaying) R.drawable.baseline_pause_48 else R.drawable.baseline_play_48)
             }
         }
 
         fun bind(dataItemTrack: DataItemTrack) {
+            dataItem = dataItemTrack
             binding.apply {
                 imagePlayOrPause.setImageResource(if (dataItemTrack.isPlaying) R.drawable.baseline_pause_48 else R.drawable.baseline_play_48)
 
@@ -39,7 +46,7 @@ class TrackAdapter(private val listener: Listener) :
                     .setTint(if (dataItemTrack.isChecked) Color.YELLOW else Color.WHITE)
 
                 cardView2.setOnClickListener {
-                    listener.highlight(dataItemTrack)
+                    listener.highlight(dataItem)
                 }
             }
         }
@@ -56,15 +63,15 @@ class TrackAdapter(private val listener: Listener) :
         position: Int,
         payloads: List<Any>
     ) {
-    //   if (payloads.isEmpty()) {
+       if (payloads.isEmpty()) {
             onBindViewHolder(holder, position)
-//        } else {
-//            payloads.forEach {
-//                if (it is Payload) {
-//                    holder.bind(it)
-//                }
-//            }
-//        }
+        } else {
+            payloads.forEach {
+                if (it is Payload) {
+                    holder.bind(it)
+                }
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: TrackHolder, position: Int) {
@@ -84,12 +91,13 @@ class TrackDiffCallback : DiffUtil.ItemCallback<DataItemTrack>() {
 
     override fun getChangePayload(oldItem: DataItemTrack, newItem: DataItemTrack): Any =
         Payload(
-//            isChecked = newItem.isChecked.takeIf { oldItem.isChecked != it }
+            isChecked = newItem.isChecked.takeIf { oldItem.isChecked != it },
+        isPlaying = newItem.isPlaying.takeIf { oldItem.isPlaying != it }
         )
-
 }
 
 data class Payload(
     val id: Int? = null,
-    val isChecked: Boolean? = null
+    val isChecked: Boolean? = null,
+val isPlaying:Boolean? = null
 )
