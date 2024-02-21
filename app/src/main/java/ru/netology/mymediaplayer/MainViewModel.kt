@@ -10,7 +10,7 @@ class MainViewModel : ViewModel() {
 
     private val repository: TrackRepository = TrackRepositoryImpl()
 
-    val dataMedia: MutableLiveData<DataMedia> = MutableLiveData<DataMedia>()
+    val dataMedia: MutableLiveData<DataMedia?> = MutableLiveData<DataMedia?>()
 
     val listDataItemTrack: MutableLiveData<List<DataItemTrack>> =
         MutableLiveData<List<DataItemTrack>>()

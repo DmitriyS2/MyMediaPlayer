@@ -42,12 +42,13 @@ class MainActivity : AppCompatActivity() {
         lifecycle.addObserver(mediaObserver)
 
         binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
+        binding.buttonPlay.isEnabled = viewModel.dataMedia.value != null
 
         binding.buttonPlay.setOnClickListener {
             if (!flagPlay) {
                 //первый старт
                 if (firstStart) {
-                    mediaObserver.firstStartPlay(viewModel.selectedTrack?.value.toString())
+                    mediaObserver.firstStartPlay(viewModel.selectedTrack.value.toString())
                     showText("playing")
                     //продолжение после паузы
                 } else {
@@ -64,11 +65,11 @@ class MainActivity : AppCompatActivity() {
             mediaObserver.player?.setOnCompletionListener {
                 mediaObserver.stopTrack()
                 viewModel.goToNextTrack()
-                mediaObserver.firstStartPlay(viewModel.selectedTrack?.value.toString())
+                mediaObserver.firstStartPlay(viewModel.selectedTrack.value.toString())
                 showText("playing")
             }
 
-            viewModel.changeImageTrack(viewModel.selectedTrack?.value, flagPlay)
+            viewModel.changeImageTrack(viewModel.selectedTrack.value, flagPlay)
             binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
         }
 
@@ -101,7 +102,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("MyLog", "MainActivity listDataItemTrack from observe=$it")
         }
 
-        viewModel.selectedTrack?.observe(this) {
+        viewModel.selectedTrack.observe(this) {
             val text = it ?: "Выберите\nкомпозицию"
             binding.chooseTrack.text = text
             binding.buttonPlay.isEnabled = it != null
@@ -149,13 +150,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
-        viewModel.changeImageTrack(viewModel.selectedTrack?.value, flagPlay)
+        viewModel.changeImageTrack(viewModel.selectedTrack.value, flagPlay)
     }
 
     private fun showText(text: String) {
         Toast.makeText(
             this,
-            "${viewModel.selectedTrack?.value.toString()} $text",
+            "${viewModel.selectedTrack.value.toString()} $text",
             Toast.LENGTH_SHORT
         ).show()
     }

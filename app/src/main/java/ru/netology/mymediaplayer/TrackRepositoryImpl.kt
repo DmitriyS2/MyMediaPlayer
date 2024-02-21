@@ -15,14 +15,19 @@ class TrackRepositoryImpl:TrackRepository {
         .connectTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    override fun getAlbum():DataMedia {
-        val request = Request.Builder()
-            .url(BASE_URL)
-            .build()
-        val call = client.newCall(request)
-        val response = call.execute()
-        val responseString = response.body?.string() ?: error("no body")
-        return gson.fromJson(responseString, trackType)
+    override fun getAlbum():DataMedia? {
+        try {
+            val request = Request.Builder()
+                .url(BASE_URL)
+                .build()
+            val call = client.newCall(request)
+            val response = call.execute()
+            val responseString = response.body?.string() ?: error("no body")
+            return gson.fromJson(responseString, trackType)
+        } catch (e:Exception) {
+            e.printStackTrace()
+            return null
+        }
     }
 
     companion object {
