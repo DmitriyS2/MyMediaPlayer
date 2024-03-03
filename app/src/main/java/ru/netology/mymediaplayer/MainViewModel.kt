@@ -1,16 +1,17 @@
 package ru.netology.mymediaplayer
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
+
+import kotlin.Exception
 import kotlin.concurrent.thread
 
 class MainViewModel : ViewModel() {
 
     private val repository: TrackRepository = TrackRepositoryImpl()
 
-    val dataMedia: MutableLiveData<DataMedia?> = MutableLiveData<DataMedia?>()
+    val dataModel: MutableLiveData<ModelData> = MutableLiveData<ModelData>()
 
     val listDataItemTrack: MutableLiveData<List<DataItemTrack>> =
         MutableLiveData<List<DataItemTrack>>()
@@ -28,9 +29,18 @@ class MainViewModel : ViewModel() {
         getAlbum()
     }
 
-    private fun getAlbum() {
+    fun getAlbum() {
         thread {
-            dataMedia.postValue(repository.getAlbum())
+            try {
+                dataModel.postValue(ModelData(loading = true))
+                val data = repository.getAlbum()
+                dataModel.postValue(ModelData(dataMedia = data, error = data==null))
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                dataModel.postValue(ModelData(error = true))
+
+            }
         }
     }
 
@@ -94,7 +104,7 @@ class MainViewModel : ViewModel() {
         }?.id ?: 0
 
         val currentId = listDataItemTrack.value?.filter {
-            it.name == selectedTrack?.value
+            it.name == selectedTrack.value
         }?.map { data ->
             data.id
         }?.firstOrNull() ?: 0
@@ -112,9 +122,5 @@ class MainViewModel : ViewModel() {
         newTrack?.let {
             highlight(it)
         }
-        Log.d(
-            "MyLog",
-            "goToNextTrack. maxId=$maxId, currentId=$currentId, newId=$newId, newTrack=${newTrack.toString()}, newName=$newName"
-        )
     }
 }

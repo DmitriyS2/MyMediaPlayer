@@ -2,9 +2,9 @@ package ru.netology.mymediaplayer
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import ru.netology.mymediaplayer.databinding.ActivityMainBinding
 
@@ -42,8 +42,7 @@ class MainActivity : AppCompatActivity() {
         lifecycle.addObserver(mediaObserver)
 
         binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
-        binding.buttonPlay.isEnabled = viewModel.dataMedia.value != null
-
+        binding.buttonPlay.isEnabled = viewModel.dataModel.value?.dataMedia != null
         binding.buttonPlay.setOnClickListener {
             if (!flagPlay) {
                 //первый старт
@@ -73,78 +72,48 @@ class MainActivity : AppCompatActivity() {
             binding.buttonPlay.setImageResource(if (flagPlay) R.drawable.baseline_pause_80 else R.drawable.baseline_play_80)
         }
 
-        viewModel.dataMedia.observe(this) {
-            it?.let {
-                Log.d("MyLog", "MainActivity dataMedia from observe=$it, tracks=${it.tracks}")
-                val listDataItemTrack = mutableListOf<DataItemTrack>()
-                viewModel.dataMedia.value?.tracks?.forEach { track ->
-                    listDataItemTrack.add(
-                        DataItemTrack(
-                            id = track.id,
-                            name = track.file,
-                            album = it.title
+        viewModel.dataModel.observe(this) {
+            it?.let { modelData ->
+                binding.progress.isVisible = modelData.loading
+                binding.errorGroup.isVisible = modelData.error
+                modelData.dataMedia?.let { dataMedia ->
+                    val listDataItemTrack = mutableListOf<DataItemTrack>()
+                    dataMedia.tracks.forEach { track ->
+                        listDataItemTrack.add(
+                            DataItemTrack(
+                                id = track.id,
+                                name = track.file,
+                                album = dataMedia.title
+                            )
                         )
-                    )
+                    }
+                    viewModel.listDataItemTrack.value = listDataItemTrack
+                    binding.nameAlbum.text = dataMedia.title
+                    binding.nameArtist.text = dataMedia.artist
+                    binding.published.text = dataMedia.published
+                    binding.genre.text = dataMedia.genre
                 }
-                viewModel.listDataItemTrack.value = listDataItemTrack
-                binding.nameAlbum.text = it.title
-                binding.nameArtist.text = it.artist
-                binding.published.text = it.published
-                binding.genre.text = it.genre
             }
         }
 
-        viewModel.listDataItemTrack.observe(this) {
+        binding.retryButton.setOnClickListener {
+            viewModel.getAlbum()
+        }
+
+        viewModel.listDataItemTrack.observe(this)
+        {
             val list = it ?: emptyList()
             adapter.trackList = list
             adapter.submitList(list)
-
-            Log.d("MyLog", "MainActivity listDataItemTrack from observe=$it")
         }
 
-        viewModel.selectedTrack.observe(this) {
+        viewModel.selectedTrack.observe(this)
+        {
             val text = it ?: "Выберите\nкомпозицию"
             binding.chooseTrack.text = text
             binding.buttonPlay.isEnabled = it != null
-
-            Log.d("MyLog", "MainActivity selectedTrack from observe=$it")
         }
 
-//            mediaObserver.apply {
-//                player?.setDataSource(
-//                    "https://raw.githubusercontent.com/netology-code/andad-homeworks/master/09_multimedia/data/+${viewModel.selectedTrack?.value.toString()}"
-//                )
-//            }.play()
-        /*
-        findViewById<Button>(R.id.play).setOnClickListener {
-            MediaPlayer.create(this, R.raw.ring).apply {
-                setOnCompletionListener {
-                    it.release()
-                }
-            }.start()
-        }
-*/
-        /*
-                findViewById<Button>(R.id.play).setOnClickListener {
-                    mediaObserver.apply {
-                        resources.openRawResourceFd(R.raw.ring).use { afd ->
-                            player?.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                        }
-                    }.play()
-                }
-        */
-//        findViewById<VideoView>(R.id.video).apply {
-//            setMediaController(MediaController(this@AppActivity))
-//            setVideoURI(
-//                Uri.parse("https://archive.org/download/BigBuckBunny1280x720Stereo/big_buck_bunny_720_stereo.mp4")
-//            )
-//            setOnPreparedListener {
-//                start()
-//            }
-//            setOnCompletionListener {
-//                stopPlayback()
-//            }
-//        }
     }
 
     override fun onResume() {

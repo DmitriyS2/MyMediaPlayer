@@ -15,20 +15,19 @@ class TrackRepositoryImpl:TrackRepository {
         .connectTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    override fun getAlbum():DataMedia? {
-        try {
+    override fun getAlbum():DataMedia? =
+         try {
             val request = Request.Builder()
                 .url(BASE_URL)
                 .build()
             val call = client.newCall(request)
             val response = call.execute()
-            val responseString = response.body?.string() ?: error("no body")
-            return gson.fromJson(responseString, trackType)
+            val responseString = response.body?.string()
+            gson.fromJson(responseString, trackType)
         } catch (e:Exception) {
             e.printStackTrace()
-            return null
+            null
         }
-    }
 
     companion object {
         const val BASE_URL = "https://github.com/netology-code/andad-homeworks/raw/master/09_multimedia/data/album.json"
